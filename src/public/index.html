@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>URL Shortener</title>
+    <link
+      href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/@mdi/font@5.x/css/materialdesignicons.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div id="app">
+      <v-app>
+        <v-main>
+          <v-alert
+            type="error"
+            dismissible
+            v-show="err"
+            transition="slide-y-transition"
+          >
+            {{ err }}
+          </v-alert>
+          <v-form @submit.prevent="onSubmit" ref="form">
+            <v-card max-width="50vw" class="mx-auto">
+              <v-card-title primary-title>
+                URL Shortener
+              </v-card-title>
+              <v-card-text>
+                <v-text-field
+                  name="url"
+                  label="URL"
+                  id="url"
+                  v-model="url"
+                  @keyup.enter.prevent="this.$refs.form.submit()"
+                  :rules="[rules.required]"
+                  required
+                ></v-text-field>
+                <div v-if="shortenedUrl">
+                  Shortened URL:
+                  <a :href="shortenedUrl" target="_blank">{{ shortenedUrl }}</a>
+                </div>
+              </v-card-text>
+              <v-card-actions>
+                <v-btn color="success" type="submit">Submit</v-btn>
+              </v-card-actions>
+            </v-card>
+          </v-form>
+        </v-main>
+      </v-app>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js"></script>
+    <script>
+      new Vue({
+        el: '#app',
+        data: {
+          url: '',
+          shortenedUrl: '',
+          err: '',
+          rules: {
+            required: value => !!value || 'Required.',
+          },
+        },
+        vuetify: new Vuetify(),
+        methods: {
+          async onSubmit(e) {
+            this.err = '';
+            this.shortenedUrl = '';
+
+            const validationResult = this.$refs.form.validate();
+            if (!validationResult) return;
+
+            try {
+              const response = await fetch('/url', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ url: this.url }),
+              });
+              const result = await response.json();
+              if (!result.success) {
+                throw new Error(result.errorMessage);
+              } else {
+                this.shortenedUrl = result.shortenedUrl;
+              }
+            } catch (error) {
+              this.err = error.message;
+            }
+          },
+        },
+      });
+    </script>
+  </body>
+</html>
