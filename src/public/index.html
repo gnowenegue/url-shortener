@@ -20,7 +20,10 @@
   <body>
     <div id="app">
       <v-app>
-        <v-main>
+        <v-overlay v-show="!loaded">
+          <v-progress-circular indeterminate size="64"></v-progress-circular>
+        </v-overlay>
+        <v-main v-show="loaded">
           <v-alert
             type="error"
             dismissible
@@ -29,18 +32,25 @@
           >
             {{ err }}
           </v-alert>
-          <v-form @submit.prevent="onSubmit" ref="form">
+          <v-form @submit.prevent="onSubmit" ref="form" class="mt-6">
             <v-card max-width="50vw" class="mx-auto">
               <v-card-title primary-title>
                 URL Shortener
               </v-card-title>
               <v-card-text>
                 <v-text-field
+                  name="slug"
+                  label="Slug"
+                  id="slug"
+                  v-model="slug"
+                  @keydown.enter.prevent
+                  @keyup.enter.prevent="focusUrlField"
+                ></v-text-field>
+                <v-text-field
                   name="url"
                   label="URL"
                   id="url"
                   v-model="url"
-                  @keyup.enter.prevent="this.$refs.form.submit()"
                   :rules="[rules.required]"
                   required
                 ></v-text-field>
@@ -49,9 +59,38 @@
                   <a :href="shortenedUrl" target="_blank">{{ shortenedUrl }}</a>
                 </div>
               </v-card-text>
-              <v-card-actions>
-                <v-btn color="success" type="submit">Submit</v-btn>
+              <v-card-actions class="justify-end">
+                <v-btn color="primary" type="submit">Submit</v-btn>
               </v-card-actions>
+            </v-card>
+            <v-card max-width="50vw" class="mx-auto mt-6">
+              <v-card-text>
+                <v-list dense>
+                  <v-subheader>URLS</v-subheader>
+                  <v-list-item-group>
+                    <v-list-item
+                      v-for="url in urls.data"
+                      :key="url._id"
+                      @click="openUrl(url.url)"
+                    >
+                      <v-list-item-content>
+                        <v-list-item-title
+                          v-text="url.slug"
+                        ></v-list-item-title>
+                        <v-list-item-subtitle
+                          v-text="url.url"
+                        ></v-list-item-subtitle>
+                      </v-list-item-content>
+                    </v-list-item>
+                  </v-list-item-group>
+                  <v-pagination
+                    v-model="urls.currentPage + 1"
+                    :length="totalPages"
+                    @input="pagination"
+                  >
+                  </v-pagination>
+                </v-list>
+              </v-card-text>
             </v-card>
           </v-form>
         </v-main>
@@ -60,46 +99,6 @@
 
     <script src="https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js"></script>
-    <script>
-      new Vue({
-        el: '#app',
-        data: {
-          url: '',
-          shortenedUrl: '',
-          err: '',
-          rules: {
-            required: value => !!value || 'Required.',
-          },
-        },
-        vuetify: new Vuetify(),
-        methods: {
-          async onSubmit(e) {
-            this.err = '';
-            this.shortenedUrl = '';
-
-            const validationResult = this.$refs.form.validate();
-            if (!validationResult) return;
-
-            try {
-              const response = await fetch('/url', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ url: this.url }),
-              });
-              const result = await response.json();
-              if (!result.success) {
-                throw new Error(result.errorMessage);
-              } else {
-                this.shortenedUrl = result.shortenedUrl;
-              }
-            } catch (error) {
-              this.err = error.message;
-            }
-          },
-        },
-      });
-    </script>
+    <script src="./app.js"></script>
   </body>
 </html>

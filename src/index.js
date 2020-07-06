@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const path = require('path');
 const express = require('express');
 const morgan = require('morgan');
@@ -16,14 +18,20 @@ app.use(
     origin: 'http://localhost',
   })
 );
-app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
 
+app.use(express.json());
+
+app.use('/url', urlRoutes);
+app.use(express.static(path.join(__dirname, 'public')));
 app.get('/:slug', async (req, res, next) => {
   try {
-    const result = await Url.find(req.params.slug);
+    const { slug } = req.params;
+    if (slug === 'favicon.ico') return res.sendStatus(200);
+    console.log('##### slug', slug, req.params);
+    const result = await Url.find(slug);
+    console.log('##### result', result);
     if (result) {
-      res.redirect(result.url);
+      return res.redirect(result.url);
     } else {
       res.status(404);
       throw new Error('URL not found.');
@@ -33,22 +41,26 @@ app.get('/:slug', async (req, res, next) => {
   }
 });
 
-app.use('/url', urlRoutes);
-
-app.use((req, res, next) => {
+/* app.use((req, res, next) => {
   res.status(404);
   next(new Error('Page not found.'));
-});
+}); */
 
 app.use((err, req, res, next) => {
-  const statusCode = res.statusCode === 200 ? 500 : res.statusCode;
+  if (err.message.startsWith('ENOENT') && err.statusCode === 404) {
+    return res.sendStatus(err.statusCode);
+  }
+
+  const statusCode = err.statusCode ? err.statusCode : 500;
   res.status(statusCode);
 
   console.error(err);
 
-  res.json({
+  return res.json({
     success: false,
-    errorMessage: 'Error has occurred.',
+    errorMessage: err.message.startsWith('E11000')
+      ? 'Slug already exists.'
+      : 'Error has occurred.',
     statusCode,
   });
 });

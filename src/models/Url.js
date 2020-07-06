@@ -10,7 +10,7 @@ const urls = db.get('urls');
 urls.createIndex('slug', { unique: true });
 
 function create(url) {
-  if (!url.url.startsWith('http://') || !url.url.startsWith('https://')) {
+  if (!url.url.startsWith('http://') && !url.url.startsWith('https://')) {
     url.url = `https://${url.url}`;
   }
 
@@ -26,7 +26,17 @@ function find(slug) {
   return urls.findOne({ slug });
 }
 
+function get(limit = 10, skip = 0) {
+  return urls.find({}, { limit, skip: limit * skip, sort: { _id: -1 } });
+}
+
+function count() {
+  return urls.count();
+}
+
 module.exports = {
   create,
   find,
+  get,
+  count,
 };

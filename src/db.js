@@ -1,3 +1,3 @@
-const db = require('monk')('localhost/url-shortener');
+const db = require('monk')(process.env.MONGODB_URI);
 
 module.exports = db;
