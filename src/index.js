@@ -27,9 +27,7 @@ app.get('/:slug', async (req, res, next) => {
   try {
     const { slug } = req.params;
     if (slug === 'favicon.ico') return res.sendStatus(200);
-    console.log('##### slug', slug, req.params);
     const result = await Url.find(slug);
-    console.log('##### result', result);
     if (result) {
       return res.redirect(result.url);
     } else {
