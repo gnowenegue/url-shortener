@@ -38,7 +38,10 @@ new Vue({
         if (!result.success) {
           throw new Error(result.errorMessage);
         } else {
+          this.$refs.form.resetValidation();
           this.shortenedUrl = result.shortenedUrl;
+          this.slug = '';
+          this.url = '';
           this.fetchData();
         }
       } catch (error) {
