@@ -12,7 +12,11 @@ const { Url } = require('./models');
 const app = express();
 
 app.use(morgan('combined'));
-app.use(helmet());
+app.use(
+  helmet({
+    contentSecurityPolicy: false,
+  })
+);
 app.use(
   cors({
     origin: 'http://localhost',
